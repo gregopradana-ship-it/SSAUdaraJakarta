@@ -1,102 +1,72 @@
-# Peramalan Suhu Udara Jakarta dengan Singular Spectrum Analysis (SSA)
+# Dashboard SSA untuk suhu udara Jakarta
 
-Analisis dan peramalan suhu udara bulanan Jakarta menggunakan metode **Singular Spectrum Analysis (SSA)** dengan pendekatan *Recurrent Forecasting*, lengkap dengan dashboard interaktif untuk menampilkan seluruh tahapan dan hasilnya.
+Dashboard interaktif berisi hasil analisis Singular Spectrum Analysis (SSA) pada data suhu udara bulanan Jakarta, Juli 2013 sampai Juni 2023. Seluruh hasil sudah tertanam di satu file HTML, jadi cukup dibuka di browser tanpa server atau instalasi apa pun.
 
-## Isi Repositori
+## Cara membuka
 
-| File | Deskripsi |
-|------|-----------|
-| `SSA.r` | Kode R: dekomposisi, grouping, rekonstruksi, peramalan, dan perhitungan akurasi |
-| `DataUdaraJakarta.csv` | Data suhu udara bulanan Jakarta (Jul 2013 – Jun 2023, 120 observasi) |
-| `Dashboard_SSA___Suhu_Udara_Jakarta_v4.html` | Dashboard interaktif hasil analisis (cukup dibuka di browser) |
+1. Unduh atau clone repositori ini.
+2. Buka `index.html` dengan browser modern (Chrome, Firefox, Edge, Safari).
 
-## Data
+Dashboard memuat Chart.js dan font Plus Jakarta Sans dari CDN, jadi perlu koneksi internet saat pertama kali dibuka. Tanpa internet, grafik tidak akan tampil.
 
-- **Kolom:** `Entity`, `Tanggal`, `Suhu Udara (°C)`
-- **Periode:** Juli 2013 – Juni 2023 (data bulanan, n = 120)
-- **Pembagian data:** 96 observasi *in-sample* (80%) dan 24 observasi *out-sample* (20%)
-- Data sudah dikoreksi dan tidak mengandung nilai tidak wajar.
+Kalau ingin menampilkannya sebagai halaman web, aktifkan GitHub Pages dari menu Settings > Pages dengan sumber branch utama dan folder root. Halaman akan tersedia di alamat yang ditampilkan GitHub di menu tersebut.
 
-## Metode
+## Parameter analisis
 
-1. **Embedding**: membentuk matriks lintasan (trajectory matrix) dengan *window length* L = 48 (K = 49).
-2. **Dekomposisi (SVD)**: eigenvalue dan eigenvector dari matriks lintasan.
-3. **Grouping** berdasarkan eigenvector dan W-correlation:
+| Parameter | Nilai |
+| --- | --- |
+| Data | Suhu udara bulanan, Jul 2013 sampai Jun 2023 (n = 120) |
+| Data in-sample | 96 bulan |
+| Data out-sample | 24 bulan (Jul 2021 sampai Jun 2023) |
+| Window length (L) | 48 |
+| Jumlah kolom lintasan (K) | 49 |
+| Periode peramalan | 12 bulan (Jul 2023 sampai Jun 2024) |
 
-   | Grup | Eigentriple |
-   |------|-------------|
-   | Trend | 1 |
-   | Season 1 | 2–3 |
-   | Season 2 | 4–5 |
-   | Season 3 | 6–7 |
+Pengelompokan komponen yang dipakai: Trend = komponen 1, Seasonal 1 = komponen 2 dan 3, Seasonal 2 = komponen 4 dan 5, Seasonal 3 = komponen 6 dan 7. Komponen 8 sampai 10 diperlakukan sebagai noise.
 
-4. **Rekonstruksi** dengan *diagonal averaging*.
-5. **Peramalan** dengan *Linear Recurrent Formula* (LRF) dan *recurrent forecasting*.
-6. **Evaluasi** menggunakan MAD, MSE, dan MAPE pada data out-sample.
-7. **Peramalan 12 bulan ke depan** (Juli 2023 – Juni 2024) menggunakan seluruh data.
+## Ringkasan hasil
 
-## Hasil Utama
+- Trend (eigenvalue pertama) menjelaskan sekitar 99,95% varians. Ketiga pasang komponen musiman masing masing di bawah 0,03%.
+- Akurasi out-sample 24 bulan: MAPE 3,33%, MAD 0,888 °C, MSE 1,251.
+- Korelasi W antar grup sangat kecil (maksimum sekitar 0,05), sehingga keempat grup terpisah dengan baik.
+- Ramalan Jul 2023 sampai Jun 2024 berada di rentang 26,20 sampai 27,54 °C, dengan puncak pada September 2023.
+- Sebagian besar residu out-sample bernilai negatif, artinya ramalan cenderung lebih tinggi dari data aktual.
 
-| Metrik (out-sample) | Nilai |
-|---------------------|-------|
-| MAPE | 3,33% |
-| MAD | 0,888 °C |
-| MSE | 1,251 |
+## Isi dashboard
 
-- Komponen **Trend** menjelaskan sekitar **99,95%** varians data.
-- Ramalan Juli 2023 – Juni 2024 berkisar **26,20 – 27,54 °C**.
+Dashboard dibagi menjadi tujuh bagian yang bisa dibuka lewat menu navigasi di bagian atas.
 
-## Cara Menjalankan
+1. Data dan parameter: plot data aktual, statistik deskriptif, dan parameter SSA.
+2. Dekomposisi: scree plot, tabel eigenvalue (48 komponen), eigenvector 1D, dan eigenvector 2D berpasangan.
+3. Grouping dan W-correlation: matriks korelasi antar grup dan antar komponen 1 sampai 10.
+4. Rekonstruksi dan diagonal averaging: komponen hasil grouping, perbandingan dengan data aktual, residu in-sample, dan koefisien Linear Recurrent Formula (LRF).
+5. Peramalan: komponen ramalan 12 bulan dan tabel hasilnya.
+6. Akurasi out-sample: perbandingan aktual dan ramalan, residu, rincian per bulan, kontribusi tiap komponen, dan temuan utama.
+7. Tabel lengkap: aktual, tiap komponen, rekonstruksi, dan residu untuk seluruh 120 bulan.
 
-### Kode R
+## Fitur
 
-Prasyarat: R dan paket [`Rssa`](https://cran.r-project.org/package=Rssa).
+- Tombol tema di pojok kanan atas untuk berpindah antara mode terang dan gelap. Tema awal mengikuti pengaturan perangkat.
+- Menu "Tampilkan grafik" pada setiap grafik untuk menyembunyikan atau menampilkan masing masing seri.
+- Menu pilihan komponen dan pasangan pada bagian eigenvector. Tabel di bawah grafik ikut berubah mengikuti pilihan.
+- Tampilan menyesuaikan lebar layar, termasuk di ponsel.
 
-```r
-install.packages("Rssa")
-```
-
-1. Buka `SSA.r` di RStudio.
-2. Jalankan skrip dari baris pertama. Skrip membuka jendela pemilihan file, lalu pilih `DataUdaraJakarta.csv`.
-3. Pastikan pemisah kolom sesuai dengan file CSV. File ini memakai koma, jadi gunakan:
-
-   ```r
-   data = read.csv(file.choose(), header = TRUE, sep = ",")
-   ```
-
-> **Catatan:** jika muncul error `$ operator is invalid for atomic vectors`, artinya baris `data = data$Suhu.Udara...C.` dijalankan lebih dari sekali. Jalankan ulang skrip dari awal (`rm(list=ls())`).
-
-> **Catatan:** pada bagian peramalan keseluruhan data, tulis `r.complete$Season1` (tanpa titik di akhir). Jika ada titik (`Season1.`), komponen Season 1 tidak ikut dijumlahkan pada garis *Prediction*.
-
-### Dashboard
-
-Buka `Dashboard_SSA___Suhu_Udara_Jakarta_v4.html` langsung di browser, tanpa instalasi.
-
-Fitur dashboard:
-- Ringkasan KPI, statistik deskriptif, dan tabel eigenvalue.
-- Grafik eigenvector 1D dan 2D dengan tabel nilai eigen.
-- Grouping, W-correlation, dan kontribusi komponen.
-- Rekonstruksi, koefisien LRF, dan peramalan 12 bulan.
-- Menu **Tampilkan grafik** pada setiap grafik untuk memilih seri yang ditampilkan.
-- Mode terang dan gelap.
-
-Untuk membagikan dashboard secara online, aktifkan **GitHub Pages** (Settings → Pages) lalu pilih branch utama.
-
-## Struktur Folder
+## Struktur file
 
 ```
 .
-├── README.md
-├── SSA.r
-├── DataUdaraJakarta.csv
-└── Dashboard_SSA___Suhu_Udara_Jakarta_v4.html
+├── index.html   # dashboard lengkap (HTML, CSS, JavaScript, dan data)
+└── README.md
 ```
 
-## Referensi
+Data hasil SSA disimpan sebagai objek JavaScript bernama `D` di dalam tag `<script>` pada `index.html`. Untuk mengganti data atau hasil analisis, ubah isi objek tersebut. Kolom yang dipakai antara lain `x` (data aktual), `fit` (rekonstruksi), `fc` (ramalan), `ev` (eigenvalue), `U` (eigenvector), `lrr` (koefisien LRF), dan `wg` serta `wi` (matriks W-correlation).
 
-- Golyandina, N., Nekrutkin, V., & Zhigljavsky, A. (2001). *Analysis of Time Series Structure: SSA and Related Techniques*. Chapman & Hall/CRC.
-- Korobeynikov, A. *Rssa: A Collection of Methods for Singular Spectrum Analysis*. R package.
+## Sumber data dan perhitungan
 
-## Penulis
+Hasil dihitung dengan kode R memakai paket Rssa, lalu diekspor ke dashboard ini. Angka di dashboard sudah dicocokkan dengan keluaran R.
 
-`Gregorius Adiyatma Pradana`
+## Teknologi
+
+- HTML, CSS, dan JavaScript tanpa framework
+- [Chart.js](https://www.chartjs.org/) 4.4.1 untuk grafik
+- Font Plus Jakarta Sans dari Google Fonts
